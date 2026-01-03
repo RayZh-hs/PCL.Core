@@ -2,18 +2,44 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.ComponentModel;
 
 namespace PCL.Core.App;
 
 public static class I18nService
 {
     private static Dictionary<string, string> _translations = new();
+    private static Dictionary<string, string> _fallbackTranslations = new(); // Default to zh-CN as fallback
     public static string CurrentLanguage { get; private set; } = "zh-CN";
+    
+    public static event EventHandler LanguageChanged;
 
     public static void Initialize()
     {
         CurrentLanguage = Config.Language;
+        
+        // Load fallback language (zh-CN) first
+        LoadFallbackLanguage();
+        
+        // Load selected language
         LoadLanguage(CurrentLanguage);
+    }
+
+    private static void LoadFallbackLanguage()
+    {
+        string fallbackPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Languages", "zh-CN.json");
+        if (File.Exists(fallbackPath))
+        {
+            try
+            {
+                string json = File.ReadAllText(fallbackPath);
+                _fallbackTranslations = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load fallback language: {ex.Message}");
+            }
+        }
     }
 
     public static void LoadLanguage(string languageCode)
@@ -25,21 +51,51 @@ public static class I18nService
             {
                 string json = File.ReadAllText(filePath);
                 _translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new();
+                CurrentLanguage = languageCode;
+                
+                // Notify all listeners that language has changed
+                LanguageChanged?.Invoke(null, EventArgs.Empty);
             }
             catch (Exception ex)
             {
-                // Log error
+                // Log error and fall back to default
                 System.Diagnostics.Debug.WriteLine($"Failed to load language {languageCode}: {ex.Message}");
+                _translations = new Dictionary<string, string>(_fallbackTranslations);
             }
         }
         else
         {
-             System.Diagnostics.Debug.WriteLine($"Language file not found: {filePath}");
+            System.Diagnostics.Debug.WriteLine($"Language file not found: {filePath}");
+            // Fall back to default language
+            _translations = new Dictionary<string, string>(_fallbackTranslations);
         }
     }
 
     public static string Get(string key)
     {
-        return _translations.TryGetValue(key, out var value) ? value : key;
+        // Try to get from current language
+        if (_translations.TryGetValue(key, out var value))
+        {
+            return value;
+        }
+        
+        // Fall back to default language
+        if (_fallbackTranslations.TryGetValue(key, out var fallbackValue))
+        {
+            return fallbackValue;
+        }
+        
+        // If not found in either, return the key itself
+        return key;
+    }
+}
+
+public class TranslationNotifier : INotifyPropertyChanged
+{
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    public void Refresh()
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
     }
 }
