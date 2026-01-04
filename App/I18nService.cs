@@ -92,7 +92,7 @@ public static class I18nService
 
 public class TranslationNotifier : INotifyPropertyChanged
 {
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     public void Refresh()
     {

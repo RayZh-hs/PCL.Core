@@ -884,7 +884,7 @@ public static partial class Config
         [ConfigItem<string>("VersionServerEnter", "", ConfigSource.GameInstance)] public partial ArgConfig<string> ServerToEnter { get; }
         [ConfigItem<int>("VersionServerLoginRequire", 0, ConfigSource.GameInstance)] public partial ArgConfig<int> LoginRequirementSolution { get; }
         [ConfigItem<string>("VersionServerAuthRegister", "", ConfigSource.GameInstance)] public partial ArgConfig<string> AuthRegisterAddress { get; }
-        [ConfigItem<string>("VersionServerAuthName", "", ConfigSource.GameInstance)] public partial ArgConfig<string> AuthServerDisplayName { get; set; }
+        [ConfigItem<string>("VersionServerAuthName", "", ConfigSource.GameInstance)] public partial ArgConfig<string> AuthServerDisplayName { get; }
         [ConfigItem<string>("VersionServerAuthServer", "", ConfigSource.GameInstance)] public partial ArgConfig<string> AuthServerAddress { get; }
         [ConfigItem<bool>("VersionServerLoginLock", false, ConfigSource.GameInstance)] public partial ArgConfig<bool> AuthTypeLucked { get; }
         [ConfigItem<int>("VersionLaunchCount", 0, ConfigSource.GameInstance)] public partial ArgConfig<int> LaunchCount { get; }

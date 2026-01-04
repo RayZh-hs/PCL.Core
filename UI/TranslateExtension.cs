@@ -10,6 +10,8 @@ namespace PCL.Core.UI
     {
         public string Key { get; set; }
 
+        public TranslateExtension() { }
+
         public TranslateExtension(string key)
         {
             Key = key;

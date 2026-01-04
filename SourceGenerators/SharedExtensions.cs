@@ -4,8 +4,9 @@ namespace PCL.Core.SourceGenerators;
 
 public static class SharedExtensions
 {
-    extension(string str)
+    public static string ToLiteral(this string str)
     {
-        public string ToLiteral() => SymbolDisplay.FormatLiteral(str, true);
+        // SymbolDisplay.FormatLiteral 是 Roslyn (Microsoft.CodeAnalysis) 提供的工具
+        return SymbolDisplay.FormatLiteral(str, true);
     }
 }
