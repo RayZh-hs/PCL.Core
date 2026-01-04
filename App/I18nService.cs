@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.ComponentModel;
+using PCL.Core.Logging;
 
 namespace PCL.Core.App;
 
@@ -17,6 +18,11 @@ public static class I18nService
     public static void Initialize()
     {
         CurrentLanguage = Config.Language;
+        if (string.IsNullOrWhiteSpace(CurrentLanguage))
+        {
+            CurrentLanguage = "zh-CN";
+        }
+        LogService.Logger?.Info($"I18nService initializing with language: {CurrentLanguage}");
         
         // Load fallback language (zh-CN) first
         LoadFallbackLanguage();
@@ -25,33 +31,49 @@ public static class I18nService
         LoadLanguage(CurrentLanguage);
     }
 
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        PropertyNameCaseInsensitive = true
+    };
+
     private static void LoadFallbackLanguage()
     {
         string fallbackPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Languages", "zh-CN.json");
+        LogService.Logger?.Info($"Loading fallback language from: {fallbackPath}");
         if (File.Exists(fallbackPath))
         {
             try
             {
                 string json = File.ReadAllText(fallbackPath);
-                _fallbackTranslations = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new();
+                _fallbackTranslations = JsonSerializer.Deserialize<Dictionary<string, string>>(json, _jsonOptions) ?? new();
+                LogService.Logger?.Info($"Loaded {_fallbackTranslations.Count} keys for fallback language.");
             }
             catch (Exception ex)
             {
+                LogService.Logger?.Error($"Failed to load fallback language: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Failed to load fallback language: {ex.Message}");
             }
+        }
+        else
+        {
+            LogService.Logger?.Warn($"Fallback language file not found: {fallbackPath}");
         }
     }
 
     public static void LoadLanguage(string languageCode)
     {
         string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Languages", $"{languageCode}.json");
+        LogService.Logger?.Info($"Loading language {languageCode} from: {filePath}");
         if (File.Exists(filePath))
         {
             try
             {
                 string json = File.ReadAllText(filePath);
-                _translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new();
+                _translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json, _jsonOptions) ?? new();
                 CurrentLanguage = languageCode;
+                LogService.Logger?.Info($"Loaded {_translations.Count} keys for language {languageCode}.");
                 
                 // Notify all listeners that language has changed
                 LanguageChanged?.Invoke(null, EventArgs.Empty);
@@ -59,12 +81,14 @@ public static class I18nService
             catch (Exception ex)
             {
                 // Log error and fall back to default
+                LogService.Logger?.Error($"Failed to load language {languageCode}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Failed to load language {languageCode}: {ex.Message}");
                 _translations = new Dictionary<string, string>(_fallbackTranslations);
             }
         }
         else
         {
+            LogService.Logger?.Warn($"Language file not found: {filePath}");
             System.Diagnostics.Debug.WriteLine($"Language file not found: {filePath}");
             // Fall back to default language
             _translations = new Dictionary<string, string>(_fallbackTranslations);
