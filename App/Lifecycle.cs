@@ -318,9 +318,16 @@ public sealed class Lifecycle : ILifecycleService
         var currentThreadId = KernelInterop.CurrentNativeThreadId;
         foreach (ProcessThread processThread in Process.GetCurrentProcess().Threads)
         {
-            var threadId = processThread.Id;
-            if (threadId == currentThreadId) continue;
-            Console.WriteLine($" - {threadId}({processThread.ThreadState}) (Start from {processThread.StartTime})");
+            try
+            {
+                var threadId = processThread.Id;
+                if (threadId == currentThreadId) continue;
+                Console.WriteLine($" - {threadId}({processThread.ThreadState}) (Start from {processThread.StartTime})");
+            }
+            catch (Exception)
+            {
+                // Thread might have exited
+            }
         }
 #endif
         if (_hasRequestedRestart && _requestRestartService is { } s)
