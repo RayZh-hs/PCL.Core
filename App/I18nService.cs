@@ -13,7 +13,7 @@ public static class I18nService
     private static Dictionary<string, string> _fallbackTranslations = new(); // Default to zh-CN as fallback
     public static string CurrentLanguage { get; private set; } = "zh-CN";
     
-    public static event EventHandler LanguageChanged;
+    public static event EventHandler? LanguageChanged;
 
     public static void Initialize()
     {
