@@ -112,6 +112,20 @@ public static class I18nService
         // If not found in either, return the key itself
         return key;
     }
+
+    public static string Fill(string key, params object[] args)
+    {
+        string format = Get(key);
+        try
+        {
+            return string.Format(format, args);
+        }
+        catch (Exception ex)
+        {
+            LogService.Logger?.Error($"Failed to format string for key {key}: {ex.Message}");
+            return format;
+        }
+    }
 }
 
 public class TranslationNotifier : INotifyPropertyChanged
