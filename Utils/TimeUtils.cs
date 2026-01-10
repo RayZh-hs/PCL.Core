@@ -1,6 +1,8 @@
 ﻿namespace PCL.Core.Utils;
 
 using System;
+using System.Collections.Generic;
+using PCL.Core.App;
 
 /// <summary>
 /// 提供与时间相关的实用方法。
@@ -35,9 +37,8 @@ public static class TimeUtils {
     /// <param name="span">要转换的时间间隔。</param>
     /// <param name="isShortForm">如果为 true，则使用简短格式。</param>
     /// <returns>格式化后的时间间隔字符串。</returns>
-    public static string GetTimeSpanString(TimeSpan span, bool isShortForm) {
+    public static string GetTimeSpanString(TimeSpan span, bool isShortForm, bool useLowerCase = false) {
         var isPast = span.TotalMilliseconds < 0;
-        var endFix = isPast ? "前" : "后";
         if (isPast) {
             span = span.Negate();
         }
@@ -47,53 +48,89 @@ public static class TimeUtils {
 
         if (isShortForm) {
             if (totalMonths >= 12) {
-                result = $"{Math.Floor(totalMonths / 12)} 年";
+                // use plural/singular based on count
+                int years = (int)Math.Floor(totalMonths / 12);
+                if (years > 1) {
+                    result = I18nService.Fill("Time.Count.Year.Plural", years);
+                } else {
+                    result = I18nService.Fill("Time.Count.Year.Singular", years);
+                }
             } else if (totalMonths >= 2) {
-                result = $"{totalMonths} 个月";
+                if (totalMonths > 1) {
+                    result = I18nService.Fill("Time.Count.Month.Plural", totalMonths);
+                } else {
+                    result = I18nService.Fill("Time.Count.Month.Singular", totalMonths);
+                }
             } else if (span.TotalDays >= 2) {
-                result = $"{span.Days} 天";
+                if (span.Days > 1) {
+                    result = I18nService.Fill("Time.Count.Day.Plural", span.Days);
+                } else {
+                    result = I18nService.Fill("Time.Count.Day.Singular", span.Days);
+                }
             } else if (span.TotalHours >= 1) {
-                result = $"{span.Hours} 小时";
+                if (span.Hours > 1) {
+                    result = I18nService.Fill("Time.Count.Hour.Plural", span.Hours);
+                } else {
+                    result = I18nService.Fill("Time.Count.Hour.Singular", span.Hours);
+                }
             } else if (span.TotalMinutes >= 1) {
-                result = $"{span.Minutes} 分钟";
+                if (span.Minutes > 1) {
+                    result = I18nService.Fill("Time.Count.Minute.Plural", span.Minutes);
+                } else {
+                    result = I18nService.Fill("Time.Count.Minute.Singular", span.Minutes);
+                }
             } else if (span.TotalSeconds >= 1) {
-                result = $"{span.Seconds} 秒";
+                if (span.Seconds > 1) {
+                    result = I18nService.Fill("Time.Count.Second.Plural", span.Seconds);
+                } else {
+                    result = I18nService.Fill("Time.Count.Second.Singular", span.Seconds);
+                }
             } else {
-                result = "1 秒";
+                result = I18nService.Fill("Time.Count.Second.Singular", 1);
             }
         } else // Long form
         {
+            List<string> parts = new List<string>();
             if (totalMonths >= 61) {
-                result = $"{Math.Floor(totalMonths / 12)} 年";
+                var years = Math.Floor(totalMonths / 12);
+                parts.Add(I18nService.Fill(years > 1 ? "Time.Count.Year.Plural" : "Time.Count.Year.Singular", years));
             } else if (totalMonths >= 12) {
                 var years = Math.Floor(totalMonths / 12);
                 var months = totalMonths % 12;
-                result = $"{years} 年{(months > 0 ? $" {months} 个月" : "")}";
+                parts.Add(I18nService.Fill(years > 1 ? "Time.Count.Year.Plural" : "Time.Count.Year.Singular", years));
+                if (months > 0) parts.Add(I18nService.Fill(months > 1 ? "Time.Count.Month.Plural" : "Time.Count.Month.Singular", months));
             } else if (totalMonths >= 4) {
-                result = $"{totalMonths} 个月";
+                parts.Add(I18nService.Fill(totalMonths > 1 ? "Time.Count.Month.Plural" : "Time.Count.Month.Singular", totalMonths));
             } else if (totalMonths >= 1) {
                 var days = span.Days % 30;
-                result = $"{totalMonths} 月{(days > 0 ? $" {days} 天" : "")}";
+                parts.Add(I18nService.Fill(totalMonths > 1 ? "Time.Count.MonthShort.Plural" : "Time.Count.MonthShort.Singular", totalMonths));
+                if (days > 0) parts.Add(I18nService.Fill(days > 1 ? "Time.Count.Day.Plural" : "Time.Count.Day.Singular", days));
             } else if (span.TotalDays >= 4) {
-                result = $"{span.Days} 天";
+                parts.Add(I18nService.Fill(span.Days > 1 ? "Time.Count.Day.Plural" : "Time.Count.Day.Singular", span.Days));
             } else if (span.TotalDays >= 1) {
-                result = $"{span.Days} 天{(span.Hours > 0 ? $" {span.Hours} 小时" : "")}";
+                parts.Add(I18nService.Fill(span.Days > 1 ? "Time.Count.Day.Plural" : "Time.Count.Day.Singular", span.Days));
+                if (span.Hours > 0) parts.Add(I18nService.Fill(span.Hours > 1 ? "Time.Count.Hour.Plural" : "Time.Count.Hour.Singular", span.Hours));
             } else if (span.TotalHours >= 10) {
-                result = $"{span.Hours} 小时";
+                parts.Add(I18nService.Fill(span.Hours > 1 ? "Time.Count.Hour.Plural" : "Time.Count.Hour.Singular", span.Hours));
             } else if (span.TotalHours >= 1) {
-                result = $"{span.Hours} 小时{(span.Minutes > 0 ? $" {span.Minutes} 分钟" : "")}";
+                parts.Add(I18nService.Fill(span.Hours > 1 ? "Time.Count.Hour.Plural" : "Time.Count.Hour.Singular", span.Hours));
+                if (span.Minutes > 0) parts.Add(I18nService.Fill(span.Minutes > 1 ? "Time.Count.Minute.Plural" : "Time.Count.Minute.Singular", span.Minutes));
             } else if (span.TotalMinutes >= 10) {
-                result = $"{span.Minutes} 分钟";
+                parts.Add(I18nService.Fill(span.Minutes > 1 ? "Time.Count.Minute.Plural" : "Time.Count.Minute.Singular", span.Minutes));
             } else if (span.TotalMinutes >= 1) {
-                result = $"{span.Minutes} 分{(span.Seconds > 0 ? $" {span.Seconds} 秒" : "")}";
+                parts.Add(I18nService.Fill(span.Minutes > 1 ? "Time.Count.MinuteShort.Plural" : "Time.Count.MinuteShort.Singular", span.Minutes));
+                if (span.Seconds > 0) parts.Add(I18nService.Fill(span.Seconds > 1 ? "Time.Count.Second.Plural" : "Time.Count.Second.Singular", span.Seconds));
             } else if (span.TotalSeconds >= 1) {
-                result = $"{span.Seconds} 秒";
+                parts.Add(I18nService.Fill(span.Seconds > 1 ? "Time.Count.Second.Plural" : "Time.Count.Second.Singular", span.Seconds));
             } else {
-                result = "1 秒";
+                parts.Add(I18nService.Fill("Time.Count.Second.Singular", 1));
             }
+
+            result = I18nService.Join(parts);
         }
 
-        return result + endFix;
+        String ret = isPast ? I18nService.Fill("Time.ToBefore", result) : I18nService.Fill("Time.ToAfter", result);
+        return useLowerCase ? ret.ToLowerInvariant() : ret;
     }
 
     /// <summary>

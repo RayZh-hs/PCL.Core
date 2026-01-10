@@ -126,6 +126,16 @@ public static class I18nService
             return format;
         }
     }
+
+    /// <summary>
+    /// Join string segments with the default connector for the current language.
+    /// </summary>
+    /// <param name="items">Items to join.</param>
+    /// <returns>Joined string.</returns>
+    public static string Join(IEnumerable<string> items)
+    {
+        return string.Join(Get("Language.DefaultConnector"), items);
+    }
 }
 
 public class TranslationNotifier : INotifyPropertyChanged
